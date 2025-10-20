@@ -89,7 +89,6 @@
             box-sizing: border-box;
         }
 
-        /* --- Efecto Brillo Dorado --- */
         @keyframes shimmer {
             0% { filter: brightness(1); }
             50% { filter: brightness(1.5); box-shadow: 0 4px 0px #b8860b, 0 0 20px #fff; }
@@ -99,7 +98,6 @@
             animation: shimmer 2s infinite;
         }
 
-        /* --- Efecto Rebote Mario --- */
         @keyframes mario-bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
@@ -108,7 +106,6 @@
             animation: mario-bounce 0.5s ease;
         }
         
-        /* --- Página 1: Bienvenida --- */
         #page-bienvenida {
             background-color: #5c94fc;
         }
@@ -125,7 +122,6 @@
             to { opacity: 1; }
         }
 
-        /* --- Página 2: Portada --- */
         #page-portada {
             background: linear-gradient(to bottom, #fff, #faf8f0);
         }
@@ -144,7 +140,6 @@
             to { filter: drop-shadow(0 0 20px #ffeb3b); }
         }
 
-        /* --- Página 3: Historia (Mobile-First) --- */
         #page-historia {
             background-color: #a02c2c;
             background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
@@ -189,7 +184,6 @@
             padding-bottom: 30px;
         }
 
-        /* -- Ventana Sorpresa (Mobile) -- */
         #sorpresa-popup {
             position: fixed;
             top: 0;
@@ -243,7 +237,6 @@
             box-shadow: none;
             margin-bottom: 0;
         }
-        /* -- Lluvia de Monedas -- */
         @keyframes fall {
             0% { top: -10%; }
             100% { top: 110%; }
@@ -259,11 +252,10 @@
             top: -10%;
         }
 
-        /* --- Página 4: Cierre --- */
         #page-cierre {
             background-color: #2c2c2c;
             overflow-y: auto;
-            justify-content: center; /* Vuelve a centrar, ya hay espacio */
+            justify-content: center;
             padding-top: 50px;
             padding-bottom: 50px;
         }
@@ -312,6 +304,8 @@
             margin-top: 20px;
             margin-bottom: 30px;
         }
+        
+        /* CAMPO RELLENABLE (DINÁMICO) */
         .campo-rellenable {
             font-weight: bold;
             color: #000;
@@ -320,15 +314,19 @@
             padding: 5px;
             border-radius: 5px;
         }
+        /* CAMPO ESTÁTICO (NOMBRE DEL MUÑECO) */
+        .campo-static {
+            font-weight: bold;
+            color: #000;
+            font-size: 1.1em;
+            padding: 5px;
+        }
         
-        /* --- @MEDIA QUERY: Estilos para Desktop (Pantallas > 768px) --- */
         @media (min-width: 768px) {
             h1 { font-size: 2.5em; }
             p { font-size: 1em; }
-            
             .gold-button { width: auto; max-width: none; }
             .close-popup { width: auto; }
-
             #page-bienvenida .animated-message { font-size: 1.2em; }
             #page-portada .logo { width: 300px; }
             #page-historia { overflow-y: hidden; justify-content: center;}
@@ -351,13 +349,11 @@
                 width: auto;
                 padding-bottom: 0;
             }
-            
             .sorpresa-content {
                 width: auto;
                 padding: 50px;
             }
             #typewriter-text { font-size: 1.5em; }
-            
             #page-cierre {
                 overflow-y: hidden;
                 justify-content: center;
@@ -367,7 +363,6 @@
             #page-cierre .logo { width: 250px; }
             #page-cierre .lema { font-size: 1em; }
             #page-cierre .frase-final { font-size: 1.5em; }
-            
             .certificado-content { width: 700px; padding: 40px; margin-top: 0;}
             .certificado-content h1 { font-size: 2em; }
             .certificado-body { font-size: 1em; }
@@ -405,7 +400,6 @@
         <div class="historia-botones">
             <button id="btn-certificado" class="gold-button">📜 Ver Certificado</button>
             <button id="btn-sorpresa" class="gold-button">🎁 Sorpresa</button>
-            
             <a href="https://www.instagram.com/trapodeluz/" target="_blank" class="gold-button">
                 ¡Mira mas personajes! 📸
             </a>
@@ -417,8 +411,7 @@
         <p class="lema">"Cada trapo, una historia; cada historia, una sonrisa."</p>
         <p class="frase-final">Gracias por adoptar un pedacito de luz ✨</p>
         <button id="btn-inicio" class="gold-button bounce-button">🏠 Volver al inicio</button>
-        
-        </div>
+    </div>
 
     <div id="page-certificado" class="page">
         <div class="certificado-content">
@@ -426,15 +419,15 @@
             <div class="certificado-body">
                 Este certificado acredita que
                 <br>
-                <span class="campo-rellenable">[NOMBRE DEL ADOPTANTE]</span>
+                <span class="campo-rellenable" id="cert-nombre">[NOMBRE DEL ADOPTANTE]</span>
                 <br>
                 ha adoptado oficialmente a
                 <br>
-                <span class="campo-rellenable">[NOMBRE DEL MUÑECO]</span>
+                <span class="campo-static">Mario</span>
                 <br>
                 el
                 <br>
-                <span class="campo-rellenable">[FECHA DE AVENTURA]</span>
+                <span class="campo-rellenable" id="cert-fecha">[FECHA DE AVENTURA]</span>
             </div>
             <button id="btn-volver-historia" class="gold-button">Volver</button>
         </div>
@@ -534,14 +527,13 @@
             }, 300);
         });
         
-        /* Lógica de la Sorpresa */
         btnSorpresa.addEventListener('click', (e) => {
             e.stopPropagation();
             playSound(soundCoin);
             popup.classList.add('active');
             startCoinRain();
             
-            const textoSorpresa = "Recuerda: ¡Tu eres el verdadero heroe!<br>¡POWER-UP! Has ganado un 10% de descuento en tu proximo Trapito de Luz.";
+            const textoSorpresa = "Recuerda: ¡Tu eres el verdadero heroe!<br><br>¡POWER-UP! Has ganado un 10% de descuento en tu proximo Trapito de Luz.";
             startTypewriter(textoSorpresa, 'typewriter-text');
         });
 
@@ -551,10 +543,41 @@
             stopCoinRain();
         });
         
-        /* Lógica del Certificado */
+        /* =======================
+         LÓGICA DEL CERTIFICADO (¡ACTUALIZADA!)
+         ======================= 
+        */
+        
+        // 1. Esta función lee la URL y rellena los campos
+        function popularCertificado() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            const nombre = urlParams.get('nombre');
+            const fecha = urlParams.get('fecha');
+
+            const elNombre = document.getElementById('cert-nombre');
+            const elFecha = document.getElementById('cert-fecha');
+            
+            // Rellena el nombre (o usa el placeholder)
+            if (nombre) {
+                elNombre.textContent = nombre;
+            } else {
+                elNombre.textContent = "[NOMBRE DEL ADOPTANTE]";
+            }
+
+            // Rellena la fecha (o usa el placeholder)
+            if (fecha) {
+                elFecha.textContent = fecha;
+            } else {
+                elFecha.textContent = "[FECHA DE AVENTURA]";
+            }
+        }
+        
+        // 2. Se llama a la función CADA VEZ que se abre el certificado
         btnCertificado.addEventListener('click', (e) => {
             e.stopPropagation();
             playSound(soundCoin);
+            popularCertificado(); // ¡Aquí está la magia!
             goToPage('page-certificado');
         });
         
@@ -573,7 +596,6 @@
             target.innerHTML = '';
             
             function type() {
-                // Corrección para que <br> funcione
                 if (txt.substring(i, i + 4).toLowerCase() === '<br>') {
                     target.innerHTML += '<br>';
                     i += 4;
