@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Mario Bros. – ¡Atrápalos ya!</title>
+  <style>
+    /* CAMBIO: Paleta de colores (Mario Bros) */
+    :root{
+      --bg-dark:#000080; /* Azul noche */
+      --bg-mid:#4169e1; /* Azul cielo */
+      --accent:#fbd000; /* Amarillo Oro */
+      --violet:#e60012; /* Rojo Mario */
+      --ink:#ffffff; /* Blanco */
+      --good:#008000; /* Verde (Hongo 1-UP) */
+      --bad:#ff0000; /* Rojo (Peligro) */
+      --cert-bg:#4169e1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Poppins, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      color:var(--ink);
+      /* CAMBIO: Fondo con nuevos colores */
+      background: radial-gradient(1200px 700px at 50% -10%, #4169e1 0%, var(--bg-mid) 55%, var(--bg-dark) 100%);
+      overflow:hidden;
+    }
+
+    /* Fondo animado */
+    .bgFX{position:fixed; inset:0; pointer-events:none; z-index:0}
+    .particle{position:absolute; font-size:18px; opacity:.25; animation: float 14s linear infinite}
+    .particle:nth-child(3n){animation-duration:18s; opacity:.2}
+    .particle:nth-child(5n){animation-duration:22s; opacity:.15}
+    @keyframes float{0%{transform:translateY(110vh) rotate(0)}100%{transform:translateY(-10vh) rotate(360deg)}}
+
+    /* Header */
+    header{
+      position:relative; z-index:2; padding:14px 16px; font-weight:900;
+      /* CAMBIO: Fondo de header */
+      background: linear-gradient(90deg, rgba(251,208,0,.18), rgba(230,0,18,.12));
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .subtitle{font-size:12px; opacity:.8; font-weight:600}
+    .header-side{flex:1; display:flex; align-items:center;}
+    .header-side:last-child{justify-content:flex-end;}
+    .header-center{text-align:center;}
+
+    #instaTop{
+      position: relative;
+      background:var(--accent); color:#fff; text-decoration:none; font-weight:900;
+      padding:8px;
+      border-radius:999px;
+      box-shadow:0 10px 24px rgba(251,208,0,.35); /* CAMBIO: Sombra de botón */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+    }
+    #instaTop svg {
+        width: 20px;
+        height: 20px;
+        fill: var(--violet); /* CAMBIO: Icono de IG rojo */
+    }
+
+    .wrap{position:relative; z-index:2; max-width:520px; margin:10px auto; padding:0 12px}
+
+    /* HUD */
+    .hud{
+      display:flex; gap:8px; justify-content:space-between; align-items:center;
+      padding:10px 14px; border:1px solid rgba(255,255,255,.08); border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      backdrop-filter: blur(6px); box-shadow: 0 10px 28px rgba(0,0,0,.35); font-weight:800
+    }
+    /* CAMBIO: Color de Píldora */
+    .pill{padding:6px 10px; border-radius:999px; background:rgba(251,208,0,.12)}
+
+    /* Juego */
+    #game{
+      position:relative; height:66vh; max-height:620px; margin-top:12px;
+      border:1px solid rgba(255,255,255,.08); border-radius:20px; overflow:hidden;
+      /* CAMBIO: Fondo de juego */
+      background: radial-gradient(900px 480px at 50% 10%, rgba(251,208,0,.1), rgba(0,0,0,0))
+    }
+    .ground{
+      position:absolute; left:0; right:0; bottom:0; height:88px;
+      /* CAMBIO: Fondo de suelo */
+      background: linear-gradient(180deg, rgba(251,208,0,.12), rgba(251,208,0,.18));
+      border-top:1px solid rgba(255,255,255,.08)
+    }
+
+    /* Jugador */
+    #player{
+      position:absolute; bottom:98px; left:50%; transform:translateX(-50%);
+      width:76px; height:76px; border-radius:18px; background:rgba(0,0,0,.35);
+      border:2px solid rgba(255,255,255,.18); box-shadow: 0 12px 28px rgba(0,0,0,.45);
+      display:grid; place-items:center; overflow:hidden
+    }
+    #player img{width:100%; height:100%; object-fit:cover}
+
+    /* Ítems */
+    .item{
+      position:absolute; top:-60px; width:56px; height:56px; display:grid; place-items:center;
+      border-radius:16px; background:rgba(0,0,0,.35); border:2px solid rgba(255,255,255,.12);
+      box-shadow:0 6px 16px rgba(0,0,0,.35); font-size:28px
+    }
+    .good{outline:3px solid var(--good)}
+    .bad{outline:3px solid var(--bad)}
+
+    /* Controles */
+    .controls{position:relative; z-index:2; display:flex; justify-content:center; gap:20px; margin:12px 0}
+    .btn{
+      border:none; background:var(--accent); color:var(--violet); font-weight:900; /* CAMBIO: color de texto */
+      padding:22px 30px; border-radius:20px; font-size:1.5rem;
+      box-shadow:0 10px 24px rgba(251,208,0,.28) /* CAMBIO: Sombra */
+    }
+
+    /* Overlays */
+    .overlay{position:absolute; inset:0; background:linear-gradient(180deg, rgba(9,6,12,.85), rgba(9,6,12,.92)); display:flex; align-items:center; justify-content:center}
+    .modal{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:20px;
+      width:min(360px,92%); text-align:center; box-shadow:0 16px 40px rgba(0,0,0,.6)
+    }
+
+    /* Certificado */
+    #certificado{
+      display:none; position:absolute; inset:0; background:rgba(0,0,0,.92); z-index:5; padding:22px;
+      color:var(--ink); overflow:auto; animation: fadein .35s ease;
+    }
+    @keyframes fadein{from{opacity:0} to{opacity:1}}
+
+    .sheet{
+      width:min(520px, 96%); margin:0 auto; position:relative; padding:18px;
+      background:var(--cert-bg); border-radius:18px; box-shadow:0 12px 32px rgba(0,0,0,.8)
+    }
+    .pixel-frame{
+      position:relative; padding:18px; border-radius:12px;
+      /* Fondo del borde del certificado (color sólido) */
+      background: var(--violet);
+      box-shadow: inset 0 0 0 10px rgba(0,0,0,.4);
+    }
+
+    .cert-inner{
+      position:relative; z-index:2; background:rgba(0,0,0,.35);
+      border:2px solid rgba(255,255,255,.25);
+      border-radius:12px; padding:18px; text-align:center; color:#fff;
+    }
+    .pixel-frame::before{content:none!important}
+
+    .title{margin:8px 0 2px; font-size:22px; text-transform:uppercase; color:var(--accent); font-weight:900; text-align:center}
+    .subtitle-big{margin:0; text-align:center; font-weight:900; font-size:26px}
+    .editable{display:inline-block; min-width:140px; padding:2px 6px; border-bottom:2px dashed rgba(255,255,255,.6)}
+    .cert-row{margin:10px 0; text-align:center}
+    .cert-actions{display:flex; gap:8px; justify-content:center; margin-top:12px}
+    .cert-btn{background:var(--accent); color:var(--violet); border:none; padding:10px 14px; border-radius:12px; font-weight:900} /* CAMBIO: color texto */
+
+    #certificado img{display:block; margin:0 auto 10px}
+
+    @media print{
+      #game, .controls, .hud, .bgFX, #instaTop{display:none!important}
+      #certificado{display:block!important; background:#fff!important}
+      .sheet{box-shadow:none}
+      .cert-actions{display:none!important}
+    }
+  </style>
+</head>
+<body>
+  <div class="bgFX" id="bgFX"></div>
+
+  <header>
+    <div class="header-side"></div>
+    <div class="header-center">
+      <div>Mario Bros. – ¡Atrápalos ya!</div>
+      <div class="subtitle">"¡Let's-a-go!" 🍄⭐</div>
+    </div>
+    <div class="header-side">
+      <a id="instaTop" href="https://www.instagram.com/trapodeluz/" aria-label="Visita nuestro Instagram">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+<path d="M224.1 140.4c-35.3-43.7-44.5-94.6-47-140.4H0v512h448V0H273.9c-2.5 45.8-11.7 96.7-47 140.4zM224 374c-47.5 0-86-38.5-86-86s38.5-86 86-86 86 38.5 86 86-38.5 86-86 86zM320 186.4c-12.8 0-23.2-10.4-23.2-23.2s10.4-23.2 23.2-23.2 23.2 10.4 23.2 23.2-10.4 23.2-23.2 23.2z"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="hud">
+      <div class="pill">⏱️ Tiempo: <span id="time">30</span>s</div>
+      <div class="pill">⭐ Monedas: <span id="score">0</span></div>
+      <div class="pill">🏆 Récord: <span id="best">0</span></div>
+    </div>
+
+    <section id="game">
+      <div id="player"><img src="mario.png" alt="Mario" /></div>
+      <div class="ground"></div>
+      <div class="overlay" id="intro">
+        <div class="modal">
+          <h2>¡Aquí vamos!</h2>
+          <p>🍄 Atrapa monedas, estrellas y hongos. 💣 Evita bombas y Koopas.</p>
+          <button class="btn" id="play">¡Let's-a-go!</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="controls">
+      <button class="btn" id="left">⬅️</button>
+      <button class="btn" id="right">➡️</button>
+    </div>
+  </div>
+
+  <section id="certificado">
+    <div class="sheet">
+      <div class="pixel-frame">
+        <div class="cert-inner" id="certContent">
+          <img src="mario.png" alt="Mario" width="120" height="120" />
+          
+          <h2 class="title">Certificado de Súper Estrella</h2>
+          <h3 class="subtitle-big">del Reino Champiñón</h3>
+          <div class="cert-row">Por la presente se certifica que</div>
+          <div class="cert-row"><span id="editNombre" class="editable" contenteditable="true">Tu nombre aquí</span></div>
+          <div class="cert-row">ha rescatado a la <b>Princesa Peach</b></div>
+          <div class="cert-row">el día <span id="editFecha" class="editable" contenteditable="true"></span>.</div>
+          <div class="cert-row" style="margin-top:8px; font-weight:800;">¡Mamma mia! ¡Eres un Súper Jugador!</div>
+          <div class="cert-row" style="margin-top:12px">Firmado:<br/>Mario</div>
+          <div class="cert-actions">
+            <button class="cert-btn" id="printBtn">🖨️ Imprimir</button>
+            <button class="cert-btn" id="downloadBtn">⬇️ Descargar</button>
+            <button class="cert-btn" id="closeCert">Volver</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <audio id="bgm" src="mario_theme.mp3" preload="auto"></audio>
+
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script>
+    /* CAMBIO: Iconos de partículas */
+    (function(){
+      const icons=['🍄','⭐','💰','💣','🐢']; const bg=document.getElementById('bgFX'); const n=28;
+      for(let i=0;i<n;i++){
+        const el=document.createElement('div'); el.className='particle';
+        el.textContent=icons[Math.floor(Math.random()*icons.length)];
+        el.style.left=Math.random()*100+'vw';
+        el.style.top=Math.random()*100+'vh';
+        el.style.animationDelay=(Math.random()*-20)+'s';
+        el.style.fontSize=(14+Math.random()*18)+'px';
+        bg.appendChild(el);
+      }
+    })();
+
+    let score=0, timeLeft=30, timer, spawnLoop, W, H;
+    /* CAMBIO: Iconos del juego */
+    const GOOD=['🍄','⭐','💰']; const BAD=['💣','🐢'];
+    const game=document.getElementById('game'); const player=document.getElementById('player');
+    const scoreEl=document.getElementById('score'); 
+    const timeEl=document.getElementById('time'); // Corrección de Bluey mantenida
+    const bestEl=document.getElementById('best');
+    const intro=document.getElementById('intro'); const leftBtn=document.getElementById('left'); const rightBtn=document.getElementById('right');
+    const BEST_KEY='nfc_mario_best'; /* CAMBIO: Clave de récord */
+    bestEl.textContent=localStorage.getItem(BEST_KEY)||0;
+
+    function layout(){const r=game.getBoundingClientRect(); W=r.width; H=r.height;} layout(); window.addEventListener('resize',layout);
+    function setPlayerX(x){x=Math.max(4,Math.min(W-80,x)); player.style.left=x+'px';} setPlayerX(W/2-38);
+    game.addEventListener('pointerdown',e=>{if(!timer)return; setPlayerX(e.clientX-game.getBoundingClientRect().left-38)});
+    game.addEventListener('pointermove',e=>{if(!timer||e.pressure===0)return; setPlayerX(e.clientX-game.getBoundingClientRect().left-38)});
+    let holdL=false,holdR=false; const stopHold=()=>{holdL=false;holdR=false};
+    ['pointerdown','touchstart'].forEach(ev=>{ leftBtn.addEventListener(ev,()=>holdL=true); rightBtn.addEventListener(ev,()=>holdR=true); });
+    ['pointerup','pointercancel','pointerleave','touchend','touchcancel'].forEach(ev=>{ leftBtn.addEventListener(ev,stopHold); rightBtn.addEventListener(ev,stopHold); });
+    setInterval(()=>{if(!timer)return; if(holdL)setPlayerX(player.offsetLeft-10); if(holdR)setPlayerX(player.offsetLeft+10);},16);
+
+    const bgm=document.getElementById('bgm'); let musicPlayedOnce=false;
+    function startMusicOnce(){if(!musicPlayedOnce){try{bgm.currentTime=0; bgm.volume=0.6; bgm.loop=true; bgm.play(); musicPlayedOnce=true;}catch(e){}}}
+    function stopMusic(){try{bgm.pause(); bgm.currentTime=0;}catch(e){}}
+
+    function start(){
+      intro.style.display='none';
+      score=0; timeLeft=30; scoreEl.textContent=score; timeEl.textContent=timeLeft; setPlayerX(W/2-38);
+      clearInterval(timer); clearInterval(spawnLoop);
+      timer=setInterval(()=>{timeLeft--; timeEl.textContent=timeLeft; if(timeLeft<=0) gameOver();},1000);
+      spawnLoop=setInterval(spawn,650); spawn();
+      startMusicOnce();
+    }
+
+    function spawn(){
+      const good=Math.random()<0.72; const el=document.createElement('div'); el.className='item '+(good?'good':'bad');
+      el.textContent = good ? GOOD[Math.floor(Math.random()*GOOD.length)] : BAD[Math.floor(Math.random()*BAD.length)];
+      const x=Math.random()*(W-56); el.style.left=x+'px'; game.appendChild(el);
+      const start=performance.now(); const base=90; const bonus=Math.min(220, score*2 + (30-timeLeft)*6); const v=(base+bonus)/1000;
+      function fall(t){ if(!timer){el.remove();return;} const dy=(t-start)*v; el.style.transform=`translateY(${dy}px)`; const r1=el.getBoundingClientRect(); const r2=player.getBoundingClientRect();
+        if(!(r1.right<r2.left||r1.left>r2.right||r1.bottom<r2.top||r1.top>r2.bottom)){ if(good){score+=1}else{score=Math.max(0,score-2)}; scoreEl.textContent=score; el.remove(); return; }
+        if(r1.top>game.getBoundingClientRect().bottom){el.remove();return;} requestAnimationFrame(fall); }
+      requestAnimationFrame(fall);
+    }
+
+    function gameOver(){
+      clearInterval(timer); clearInterval(spawnLoop); timer=null; spawnLoop=null; [...document.querySelectorAll('.item')].forEach(n=>n.remove());
+      const best=Math.max(Number(localStorage.getItem(BEST_KEY)||0),score); localStorage.setItem(BEST_KEY,best); bestEl.textContent=best;
+      stopMusic();
+      if(score>=15){ openCertificate(); } else { intro.style.display='flex'; }
+    }
+
+    document.getElementById('play').addEventListener('click', start);
+
+    const certificado=document.getElementById('certificado'); const printBtn=document.getElementById('printBtn'); const downloadBtn=document.getElementById('downloadBtn'); const closeCert=document.getElementById('closeCert');
+    document.getElementById('editFecha').textContent = (function(){const d=new Date(); const z=n=>n<10?'0'+n:n; return `${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()}`;})();
+    function openCertificate(){ certificado.style.display='block'; }
+    closeCert.addEventListener('click', ()=>{ certificado.style.display='none'; intro.style.display='flex'; });
+    printBtn.addEventListener('click', ()=>{ window.print(); });
+
+    downloadBtn.addEventListener('click', ()=>{
+      const actions=document.querySelector('.cert-actions');
+      const prev=actions.style.display; actions.style.display='none';
+      html2canvas(document.getElementById('certContent'), {scale:2, backgroundColor:null}).then(canvas=>{
+        const link=document.createElement('a');
+        const nombre=(document.getElementById('editNombre').textContent||'TuNombre').replace(/\s+/g,'_');
+        /* CAMBIO: Nombre de archivo de descarga */
+        link.download=`Certificado_${nombre}_Mario.png`;
+        link.href=canvas.toDataURL('image/png');
+        link.click();
+        actions.style.display=prev || 'flex';
+      });
+    });
+  </script>
+</body>
+</html>
